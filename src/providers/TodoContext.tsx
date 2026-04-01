@@ -7,18 +7,53 @@ import {
 	useEffect,
 } from "react";
 import { v4 as uuid } from "uuid";
+import type { Task } from "../types/taskTypes.ts";
 
 type TodoContextType = {
-	// Todo 3.1
+  tasks: Task[]; 
+  addTask: (task: Omit<Task, "id" | "completed">) => void;
+  deleteTask: (id: string) => void;
+  toggleCompleteTask: (id: string) => void;
 };
 
 const TodoContext = createContext<TodoContextType | undefined>(undefined);
 
 export const TodoProvider: FC<{ children: ReactNode }> = ({ children }) => {
-	// Todo 3.2
+	const [tasks, setTasks] = useState<Task[]>(() => {
+		const stored = localStorage.getItem("tasks");
+		return stored ? (JSON.parse(stored) as Task[]) : [];
+	});
+
+	useEffect(() => {
+		localStorage.setItem("tasks", JSON.stringify(tasks));
+	}, [tasks]);
+
+	function addTask(task: Omit<Task, "id" | "completed">) {
+		const newTask: Task = {
+			id: uuid(),
+			completed: false,
+			...task,
+		};
+		setTasks([...tasks, newTask]);
+	}
+
+	function toggleCompleteTask(id: string) {
+		setTasks(
+			tasks.map((task) =>
+				task.id === id ? { ...task, completed: !task.completed } : task
+			)
+		);
+	}
+
+	function deleteTask(id: string) {
+		setTasks(tasks.filter((task) => task.id !== id));
+	}
 
 	const value: TodoContextType = {
-		// Todo 3.2
+		tasks,
+		addTask,
+		deleteTask,
+		toggleCompleteTask,
 	};
 
 	return <TodoContext.Provider value={value}>{children}</TodoContext.Provider>;
